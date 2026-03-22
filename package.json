@@ -1,0 +1,13 @@
+{
+  "name": "lecture-note-text-webapp-starter",
+  "private": true,
+  "workspaces": [
+    "lecture-note-app"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace lecture-note-app",
+    "build": "npm run build --workspace lecture-note-app",
+    "start": "npm run start --workspace lecture-note-app",
+    "lint": "npm run lint --workspace lecture-note-app"
+  }
+}
