@@ -156,11 +156,11 @@ function buildCopyText(note: LectureNote) {
 }
 
 export default function HomePage() {
-  const [courseTitle, setCourseTitle] = useState("현대미술사");
-  const [lectureTitle, setLectureTitle] = useState("확장된 장과 현대 조각");
+  const [courseTitle, setCourseTitle] = useState("");
+  const [lectureTitle, setLectureTitle] = useState("");
   const [density, setDensity] = useState<Density>("normal");
   const [withQuiz, setWithQuiz] = useState(true);
-  const [sourceText, setSourceText] = useState(sampleText);
+  const [sourceText, setSourceText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
@@ -257,34 +257,20 @@ export default function HomePage() {
     <main className="pageShell">
       <section className="hero">
         <div className="heroCopy">
-          <div className="heroRibbon" aria-hidden="true" />
           <span className="eyebrow">Kitty Study Notes</span>
           <h1>강의 노트 메이커</h1>
           <p>
             강의 텍스트를 넣으면 요약, 핵심 개념, 작품 정리, 시험 포인트,
             암기 문장, 복습 퀴즈까지 한 번에 정리합니다.
           </p>
-          <div className="heroHighlights">
-            <span className="heroChip">작품은 작가명과 함께 정리</span>
-            <span className="heroChip">교수님 강조 포인트는 별표 표시</span>
-            <span className="heroChip">모바일에서도 읽기 쉬운 카드형 구성</span>
+          <div className="heroList">
+            <p>작품은 작가명과 함께 따로 묶어 정리합니다.</p>
+            <p>교수님이 강조한 부분은 별표로 다시 보여줍니다.</p>
+            <p>모바일에서도 한 장씩 읽히는 카드 흐름으로 정리합니다.</p>
           </div>
         </div>
 
         <div className="heroStats">
-          <div className="kittyBadge" aria-hidden="true">
-            <span className="kittyEar left" />
-            <span className="kittyEar right" />
-            <span className="kittyEye left" />
-            <span className="kittyEye right" />
-            <span className="kittyNose" />
-            <span className="kittyWhisker left top" />
-            <span className="kittyWhisker left bottom" />
-            <span className="kittyWhisker right top" />
-            <span className="kittyWhisker right bottom" />
-            <span className="kittyBow" />
-          </div>
-
           <div className="statCard">
             <span>입력 글자 수</span>
             <strong>{charCount.toLocaleString()}</strong>

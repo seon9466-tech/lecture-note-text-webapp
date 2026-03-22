@@ -40,19 +40,6 @@ body {
   padding: 28px 20px 56px;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.55;
-  background-image:
-    radial-gradient(circle, rgba(240, 98, 146, 0.1) 0 2px, transparent 2px),
-    radial-gradient(circle, rgba(255, 143, 177, 0.09) 0 2px, transparent 2px);
-  background-position: 0 0, 18px 18px;
-  background-size: 36px 36px;
-}
-
 a {
   color: inherit;
 }
@@ -89,70 +76,10 @@ select {
 }
 
 .heroCopy {
-  overflow: hidden;
   padding: 34px;
-}
-
-.heroCopy::before,
-.heroCopy::after {
-  content: "";
-  position: absolute;
-  top: -18px;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(180deg, #fff9fb 0%, var(--bg-accent) 100%);
-  border: 1px solid rgba(240, 98, 146, 0.18);
-  z-index: 0;
-}
-
-.heroCopy::before {
-  left: 72px;
-  border-radius: 18px 70px 14px 62px;
-  transform: rotate(-24deg);
-}
-
-.heroCopy::after {
-  left: 148px;
-  border-radius: 70px 18px 62px 14px;
-  transform: rotate(20deg);
-}
-
-.heroRibbon {
-  position: absolute;
-  top: 24px;
-  right: 32px;
-  width: 74px;
-  height: 36px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ff90b5 0%, #f54f8e 100%);
-  box-shadow: var(--shadow-soft);
-}
-
-.heroRibbon::before,
-.heroRibbon::after {
-  content: "";
-  position: absolute;
-  top: -8px;
-  width: 32px;
-  height: 48px;
-  background: linear-gradient(180deg, #ff9ec0 0%, #f76598 100%);
-}
-
-.heroRibbon::before {
-  left: -14px;
-  border-radius: 28px 10px 28px 10px;
-  transform: rotate(-18deg);
-}
-
-.heroRibbon::after {
-  right: -14px;
-  border-radius: 10px 28px 10px 28px;
-  transform: rotate(18deg);
-}
-
-.heroCopy > * {
-  position: relative;
-  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .eyebrow {
@@ -184,24 +111,16 @@ select {
   line-height: 1.75;
 }
 
-.heroHighlights {
-  display: flex;
-  flex-wrap: wrap;
+.heroList {
+  display: grid;
   gap: 10px;
   margin-top: 20px;
 }
 
-.heroChip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(240, 98, 146, 0.12);
-  color: var(--ink);
-  font-size: 0.86rem;
-  font-weight: 700;
+.heroList p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
 }
 
 .heroStats {
@@ -214,139 +133,6 @@ select {
     var(--panel);
 }
 
-.kittyBadge {
-  position: relative;
-  width: 140px;
-  height: 122px;
-  margin: 0 auto 8px;
-  border-radius: 50% 50% 44% 44%;
-  background: linear-gradient(180deg, #ffffff 0%, #fff8fc 100%);
-  border: 1px solid rgba(240, 98, 146, 0.12);
-  box-shadow: var(--shadow-soft);
-}
-
-.kittyEar {
-  position: absolute;
-  top: -18px;
-  width: 44px;
-  height: 52px;
-  background: linear-gradient(180deg, #ffffff 0%, #ffe3ee 100%);
-  border: 1px solid rgba(240, 98, 146, 0.14);
-}
-
-.kittyEar.left {
-  left: 18px;
-  border-radius: 10px 40px 10px 26px;
-  transform: rotate(-18deg);
-}
-
-.kittyEar.right {
-  right: 18px;
-  border-radius: 40px 10px 26px 10px;
-  transform: rotate(18deg);
-}
-
-.kittyEye {
-  position: absolute;
-  top: 48px;
-  width: 10px;
-  height: 12px;
-  border-radius: 999px;
-  background: #4c3841;
-}
-
-.kittyEye.left {
-  left: 44px;
-}
-
-.kittyEye.right {
-  right: 44px;
-}
-
-.kittyNose {
-  position: absolute;
-  left: 50%;
-  top: 68px;
-  width: 14px;
-  height: 10px;
-  border-radius: 999px;
-  background: #fdb4ca;
-  transform: translateX(-50%);
-}
-
-.kittyWhisker {
-  position: absolute;
-  top: 68px;
-  width: 34px;
-  height: 2px;
-  background: rgba(82, 48, 62, 0.54);
-  border-radius: 999px;
-}
-
-.kittyWhisker.left {
-  left: 8px;
-}
-
-.kittyWhisker.right {
-  right: 8px;
-}
-
-.kittyWhisker.top.left,
-.kittyWhisker.top.right {
-  transform: rotate(12deg);
-}
-
-.kittyWhisker.bottom.left,
-.kittyWhisker.bottom.right {
-  top: 80px;
-  transform: rotate(-10deg);
-}
-
-.kittyWhisker.right.top,
-.kittyWhisker.right.bottom {
-  transform-origin: right center;
-}
-
-.kittyWhisker.right.top {
-  transform: rotate(-12deg);
-}
-
-.kittyWhisker.right.bottom {
-  transform: rotate(10deg);
-}
-
-.kittyBow {
-  position: absolute;
-  top: 18px;
-  right: 14px;
-  width: 40px;
-  height: 18px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ff9cbc 0%, #f35990 100%);
-}
-
-.kittyBow::before,
-.kittyBow::after {
-  content: "";
-  position: absolute;
-  top: -6px;
-  width: 18px;
-  height: 28px;
-  background: linear-gradient(180deg, #ffadca 0%, #f56b9c 100%);
-}
-
-.kittyBow::before {
-  left: -8px;
-  border-radius: 20px 10px 20px 10px;
-  transform: rotate(-16deg);
-}
-
-.kittyBow::after {
-  right: -8px;
-  border-radius: 10px 20px 10px 20px;
-  transform: rotate(16deg);
-}
-
 .statCard {
   display: flex;
   flex-direction: column;
@@ -354,7 +140,8 @@ select {
   padding: 18px;
   border-radius: 24px;
   border: 1px solid rgba(240, 98, 146, 0.12);
-  background: var(--panel-strong);
+  background: rgba(255, 253, 253, 0.88);
+  box-shadow: var(--shadow-soft);
 }
 
 .statCard span {
@@ -526,10 +313,7 @@ select {
 }
 
 .outputPanel {
-  background:
-    radial-gradient(circle at 92% 6%, rgba(255, 220, 232, 0.6), transparent 18%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 244, 248, 0.94)),
-    var(--panel);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 244, 248, 0.94));
 }
 
 .emptyState,
@@ -681,14 +465,6 @@ select {
   .grid {
     grid-template-columns: 1fr;
   }
-
-  .heroStats {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .kittyBadge {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 760px) {
@@ -697,21 +473,13 @@ select {
   }
 
   .heroCopy,
-  .panel,
-  .heroStats {
+  .panel {
     padding: 18px;
     border-radius: 28px;
   }
 
   .heroCopy h1 {
     font-size: clamp(2.4rem, 14vw, 3.6rem);
-  }
-
-  .heroRibbon {
-    top: 20px;
-    right: 20px;
-    transform: scale(0.84);
-    transform-origin: top right;
   }
 
   .heroStats {
@@ -745,15 +513,6 @@ select {
 }
 
 @media (max-width: 520px) {
-  .heroHighlights {
-    flex-direction: column;
-  }
-
-  .heroChip {
-    width: 100%;
-    justify-content: center;
-  }
-
   .badgeRow {
     gap: 8px;
   }
