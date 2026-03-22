@@ -8,9 +8,59 @@ function normalizeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function cleanArtistCandidate(value: string) {
+  return value
+    .trim()
+    .replace(/^(작가|artist)\s*[:：]?\s*/i, "")
+    .replace(/\s*(의 작품|가 제작한|가 만든|의 조각).*$/u, "")
+    .trim();
+}
+
+function isLikelyNonArtistLabel(value: string) {
+  return /(박물관|미술관|museum|gallery|collection|소장|소장처|양식|시대|지역|왕조|공화정|제국|에트루리아|카피톨리노)/i.test(
+    value,
+  );
+}
+
 function normalizeArtist(value: unknown) {
-  const normalized = normalizeString(value);
-  return normalized || "미상";
+  const normalized = cleanArtistCandidate(normalizeString(value));
+
+  if (!normalized) {
+    return "미상";
+  }
+
+  if (/^(미상|unknown|anonymous)$/i.test(normalized)) {
+    return "미상";
+  }
+
+  if (normalized.length > 40 || /[.!?]/.test(normalized) || isLikelyNonArtistLabel(normalized)) {
+    return "미상";
+  }
+
+  return normalized;
+}
+
+function extractArtistFromCommentary(commentary: string[]) {
+  const patterns = [
+    /([가-힣A-Za-z][가-힣A-Za-z\s.·-]{1,38})의 작품/u,
+    /([가-힣A-Za-z][가-힣A-Za-z\s.·-]{1,38})가 제작한/u,
+    /([가-힣A-Za-z][가-힣A-Za-z\s.·-]{1,38})가 만든/u,
+    /작가[는은]?\s*([가-힣A-Za-z][가-힣A-Za-z\s.·-]{1,38})/u,
+    /by\s+([A-Za-z][A-Za-z\s.-]{1,38})/i,
+  ];
+
+  for (const line of commentary) {
+    for (const pattern of patterns) {
+      const match = line.match(pattern);
+      const candidate = normalizeArtist(match?.[1]);
+
+      if (candidate !== "미상") {
+        return candidate;
+      }
+    }
+  }
+
+  return "미상";
 }
 
 function normalizeArrayLike(value: unknown) {
@@ -88,8 +138,7 @@ function looksLikeQuizType(value: unknown) {
 }
 
 function looksLikeArtistName(value: string) {
-  const trimmed = value.trim();
-  return Boolean(trimmed) && trimmed.length <= 40 && !/[.!?]/.test(trimmed);
+  return normalizeArtist(value) !== "미상";
 }
 
 function splitLabelAndBody(value: string) {
@@ -279,7 +328,14 @@ function normalizeWork(value: unknown) {
   }
 
   if ("title" in value || "artist" in value || "commentary" in value) {
-    return value;
+    const commentary = normalizeStringArray(value.commentary);
+    const artist = normalizeArtist(value.artist);
+
+    return {
+      ...value,
+      artist: artist === "미상" ? extractArtistFromCommentary(commentary) : artist,
+      commentary,
+    };
   }
 
   const entries = Object.entries(value);
@@ -304,9 +360,14 @@ function normalizeWork(value: unknown) {
     }
 
     if (isRecord(rawValue)) {
+      const commentary = normalizeStringArray(rawValue.commentary);
+      const artist = normalizeArtist(rawValue.artist);
+
       return {
         title,
         ...rawValue,
+        artist: artist === "미상" ? extractArtistFromCommentary(commentary) : artist,
+        commentary,
       };
     }
   }

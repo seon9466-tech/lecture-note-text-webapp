@@ -110,7 +110,7 @@ function buildCopyText(note: LectureNote) {
   if (note.works.length > 0) {
     lines.push("[작품 정리]");
     note.works.forEach((work) => {
-      const titleLine = `- 작품 / 작가: ${stripStar(work.title)} / ${renderArtist(work.artist)}`;
+      const titleLine = `- ${stripStar(work.title)} / ${renderArtist(work.artist)}`;
       lines.push(titleLine);
       work.commentary.forEach((line) => lines.push(`  - ${stripStar(line)}`));
     });
@@ -456,12 +456,7 @@ export default function HomePage() {
                   <div className="workList">
                     {data.note.works.map((work, index) => (
                       <article className="workCard" key={`work-${index}-${work.title}`}>
-                        <h4>
-                          작품 / 작가
-                          <span className="workMeta">
-                            : {stripStar(work.title)} / {renderArtist(work.artist)}
-                          </span>
-                        </h4>
+                        <h4>{stripStar(work.title)}<span className="workMeta"> / {renderArtist(work.artist)}</span></h4>
                         <ul className="bulletList">
                           {work.commentary.map((line, lineIndex) => (
                             <li
