@@ -48,6 +48,11 @@ function stripStar(value: string) {
   return value.trim().replace(/^\*\s*/, "");
 }
 
+function renderArtist(value: string) {
+  const normalized = stripStar(value);
+  return normalized || "미상";
+}
+
 function renderMarkedText(value: string) {
   const emphasized = isStarred(value);
   const text = stripStar(value);
@@ -105,9 +110,7 @@ function buildCopyText(note: LectureNote) {
   if (note.works.length > 0) {
     lines.push("[작품 정리]");
     note.works.forEach((work) => {
-      const titleLine = work.artist
-        ? `- ${stripStar(work.title)} / ${stripStar(work.artist)}`
-        : `- ${stripStar(work.title)}`;
+      const titleLine = `- 작품 / 작가: ${stripStar(work.title)} / ${renderArtist(work.artist)}`;
       lines.push(titleLine);
       work.commentary.forEach((line) => lines.push(`  - ${stripStar(line)}`));
     });
@@ -454,10 +457,10 @@ export default function HomePage() {
                     {data.note.works.map((work, index) => (
                       <article className="workCard" key={`work-${index}-${work.title}`}>
                         <h4>
-                          {stripStar(work.title)}
-                          {work.artist && (
-                            <span className="workMeta"> / {stripStar(work.artist)}</span>
-                          )}
+                          작품 / 작가
+                          <span className="workMeta">
+                            : {stripStar(work.title)} / {renderArtist(work.artist)}
+                          </span>
                         </h4>
                         <ul className="bulletList">
                           {work.commentary.map((line, lineIndex) => (

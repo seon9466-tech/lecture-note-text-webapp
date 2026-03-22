@@ -10,7 +10,8 @@ export function buildSystemPrompt() {
     "If quiz items are requested, create answerable questions based only on the source text.",
     "If the lecture discusses specific works or artworks, separate them into a dedicated works array.",
     "Each work item should include title, artist, and commentary.",
-    "If a specific artwork is clearly identifiable but the lecture omits the artist, you may supplement the artist from well-known art-historical knowledge. If you are not confident, leave the artist empty instead of guessing.",
+    "If a specific artwork is clearly identifiable but the lecture omits the artist, supplement the artist from well-known art-historical knowledge when you are confident.",
+    "If the artist is genuinely unknown or cannot be identified with confidence, set artist to '미상'. Do not leave artist empty.",
     "When the professor clearly emphasizes something, prefix that item with '* ' so it can be highlighted in the UI.",
     "For Korean output, use natural sentence endings with variation. Do not end every item with the same pattern.",
   ].join(" ");
@@ -40,7 +41,7 @@ export function buildUserPrompt(params: {
     "1. summary must contain 3 to 5 bullet-style items.",
     "2. coreConcepts must clearly describe definition, features, keyPoints, and likelyExam.",
     "3. structure must represent a review-friendly topic tree with parent topics and child points.",
-    "4. works must be an array. If one or more specific works are discussed, create one entry per work with title, artist, and commentary. If no specific work is discussed, works must be an empty array.",
+    "4. works must be an array. If one or more specific works are discussed, create one entry per work with title, artist, and commentary. Every work item must include artist. If you can confidently supplement the artist, do so. If the artist is unknown, use '미상'. If no specific work is discussed, works must be an empty array.",
     "5. examPoints must focus on likely definitions, comparisons, critiques, or short essay prompts.",
     "6. memoryLines must be short, memorable review lines.",
     "7. In Korean output, summary items, keyPoints, examPoints, memoryLines, and work commentary should read like natural sentence-style notes. Avoid noun-only fragments.",

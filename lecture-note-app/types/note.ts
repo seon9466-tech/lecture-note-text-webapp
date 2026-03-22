@@ -8,6 +8,11 @@ function normalizeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function normalizeArtist(value: unknown) {
+  const normalized = normalizeString(value);
+  return normalized || "미상";
+}
+
 function normalizeArrayLike(value: unknown) {
   if (Array.isArray(value)) {
     return value;
@@ -233,14 +238,14 @@ function normalizeWork(value: unknown) {
     if (slashParts.length === 2) {
       return {
         title: slashParts[0],
-        artist: slashParts[1],
+        artist: normalizeArtist(slashParts[1]),
         commentary: [],
       };
     }
 
     return {
       title: value,
-      artist: "",
+      artist: "미상",
       commentary: [],
     };
   }
@@ -248,17 +253,17 @@ function normalizeWork(value: unknown) {
   if (Array.isArray(value)) {
     const [titleValue, ...rest] = value;
     const title = normalizeString(titleValue);
-    let artist = "";
+    let artist = "미상";
     let commentarySource: unknown = [];
 
     if (rest.length === 1) {
       if (typeof rest[0] === "string" && looksLikeArtistName(rest[0])) {
-        artist = normalizeString(rest[0]);
+        artist = normalizeArtist(rest[0]);
       } else {
         commentarySource = rest[0];
       }
     } else if (rest.length >= 2) {
-      artist = normalizeString(rest[0]);
+      artist = normalizeArtist(rest[0]);
       commentarySource = rest.slice(1);
     }
 
@@ -285,7 +290,7 @@ function normalizeWork(value: unknown) {
     if (typeof rawValue === "string") {
       return {
         title,
-        artist: "",
+        artist: "미상",
         commentary: [rawValue],
       };
     }
@@ -293,7 +298,7 @@ function normalizeWork(value: unknown) {
     if (Array.isArray(rawValue)) {
       return {
         title,
-        artist: "",
+        artist: "미상",
         commentary: rawValue,
       };
     }
@@ -408,7 +413,7 @@ export const WorkSchema = z.preprocess(
   normalizeWork,
   z.object({
     title: StringField,
-    artist: StringField.default(""),
+    artist: z.preprocess(normalizeArtist, z.string()),
     commentary: StringArrayField.default([]),
   }),
 );
