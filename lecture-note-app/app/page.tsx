@@ -94,12 +94,56 @@ function formatListSection(title: string, items: string[]) {
   ].join("\n");
 }
 
+function collectProfessorHighlights(note: LectureNote) {
+  const candidates = [
+    note.oneSentenceTheme,
+    ...note.summary,
+    ...note.examPoints,
+    ...note.memoryLines,
+    ...note.coreConcepts.flatMap((concept) => [
+      concept.term,
+      concept.definition,
+      ...concept.features,
+      ...concept.keyPoints,
+    ]),
+    ...note.structure.flatMap((node) => [node.topic, ...node.children]),
+    ...note.works.flatMap((work) => [work.title, work.artist, ...work.commentary]),
+    ...note.quiz.flatMap((quiz) => [quiz.question, quiz.answer, quiz.hint]),
+  ];
+
+  const seen = new Set<string>();
+  const highlights: string[] = [];
+
+  candidates.forEach((candidate) => {
+    if (!candidate || !isStarred(candidate)) {
+      return;
+    }
+
+    const normalized = stripStar(candidate);
+    if (!normalized || seen.has(normalized)) {
+      return;
+    }
+
+    seen.add(normalized);
+    highlights.push(normalized);
+  });
+
+  return highlights;
+}
+
 function buildCopyText(note: LectureNote) {
   const lines: string[] = [];
+  const professorHighlights = collectProfessorHighlights(note);
 
   if (note.title) lines.push(note.title);
   if (note.oneSentenceTheme) lines.push(stripStar(note.oneSentenceTheme));
   lines.push("");
+
+  if (professorHighlights.length > 0) {
+    lines.push("[교수님 강조]");
+    lines.push(...professorHighlights.map((item) => `- ${item}`));
+    lines.push("");
+  }
 
   if (note.summary.length > 0) {
     lines.push("[핵심 요약]");
@@ -170,6 +214,10 @@ export default function HomePage() {
   const [data, setData] = useState<ApiResponse | null>(null);
 
   const charCount = useMemo(() => sourceText.trim().length, [sourceText]);
+  const professorHighlights = useMemo(
+    () => (data ? collectProfessorHighlights(data.note) : []),
+    [data],
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -435,6 +483,19 @@ export default function HomePage() {
                 <h3>{data.note.title}</h3>
                 <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
               </section>
+
+              {professorHighlights.length > 0 && (
+                <section className="outputSection">
+                  <h3>교수님 강조</h3>
+                  <ul className="bulletList">
+                    {professorHighlights.map((item, index) => (
+                      <li className="starredItem" key={`professor-${index}-${item}`}>
+                        <span className="starredText">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               <section className="outputSection">
                 <h3>핵심 요약</h3>

@@ -14,6 +14,7 @@ export function buildSystemPrompt() {
     "Artist means the creator of the work. Do not use a museum name, collection name, place name, period label, or style label as artist.",
     "If the artist is genuinely unknown or cannot be identified with confidence, set artist to '미상'. Do not leave artist empty.",
     "When the professor clearly emphasizes something, prefix that item with '* ' so it can be highlighted in the UI.",
+    "Do not hide emphasized points inside plain commentary. Mark them explicitly with '* ' wherever they appear.",
     "For Korean output, use natural sentence endings with variation. Do not end every item with the same pattern.",
   ].join(" ");
 }
@@ -47,7 +48,7 @@ export function buildUserPrompt(params: {
     "6. memoryLines must be short, memorable review lines.",
     "7. In Korean output, summary items, keyPoints, examPoints, memoryLines, and work commentary should read like natural sentence-style notes. Avoid noun-only fragments.",
     "8. Vary Korean sentence endings naturally. Do not make every line end with the same suffix.",
-    "9. When the professor emphasized something, prefix that item with '* '.",
+    "9. When the professor emphasized something, prefix that item with '* '. Mark every emphasized point explicitly.",
     params.withQuiz
       ? "10. quiz must contain 3 to 5 items and each type must be one of: short_answer, true_false, comparison."
       : "10. quiz must be an empty array.",
