@@ -19,13 +19,23 @@ const RequestSchema = z.object({
   sourceText: z.string().min(50, "강의 텍스트를 조금 더 길게 입력해 주세요."),
 });
 
-function formatIssuePath(path: (string | number)[]) {
+function formatIssuePath(path: readonly PropertyKey[]) {
   if (path.length === 0) {
     return "root";
   }
 
   return path
-    .map((segment) => (typeof segment === "number" ? `[${segment}]` : segment))
+    .map((segment) => {
+      if (typeof segment === "number") {
+        return `[${segment}]`;
+      }
+
+      if (typeof segment === "symbol") {
+        return segment.toString();
+      }
+
+      return segment;
+    })
     .join(".")
     .replace(/\.\[/g, "[");
 }
