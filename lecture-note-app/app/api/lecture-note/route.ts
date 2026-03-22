@@ -19,6 +19,17 @@ const RequestSchema = z.object({
   sourceText: z.string().min(50, "강의 텍스트를 조금 더 길게 입력해 주세요."),
 });
 
+function formatIssuePath(path: (string | number)[]) {
+  if (path.length === 0) {
+    return "root";
+  }
+
+  return path
+    .map((segment) => (typeof segment === "number" ? `[${segment}]` : segment))
+    .join(".")
+    .replace(/\.\[/g, "[");
+}
+
 function parseLectureNoteFromText(text: string) {
   const trimmed = text.trim();
   const withoutCodeFence = trimmed
@@ -35,7 +46,18 @@ function parseLectureNoteFromText(text: string) {
   }
 
   const jsonText = withoutCodeFence.slice(jsonStart, jsonEnd + 1);
-  return LectureNoteSchema.parse(JSON.parse(jsonText));
+  const parsedJson = JSON.parse(jsonText);
+  const parsed = LectureNoteSchema.safeParse(parsedJson);
+
+  if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue ? formatIssuePath(issue.path) : "root";
+    const message = issue?.message || "모델 응답 형식이 올바르지 않습니다.";
+
+    throw new Error(`모델 응답 형식 오류 (${path}): ${message}`);
+  }
+
+  return parsed.data;
 }
 
 export async function POST(request: Request) {
@@ -52,7 +74,20 @@ export async function POST(request: Request) {
     const openai = new OpenAI({ apiKey });
 
     const json = await request.json();
-    const body = RequestSchema.parse(json);
+    const requestResult = RequestSchema.safeParse(json);
+
+    if (!requestResult.success) {
+      const issue = requestResult.error.issues[0];
+      const path = issue ? formatIssuePath(issue.path) : "root";
+      const message = issue?.message || "입력값이 올바르지 않습니다.";
+
+      return NextResponse.json(
+        { error: `입력값 오류 (${path}): ${message}` },
+        { status: 400 },
+      );
+    }
+
+    const body = requestResult.data;
     const normalized = normalizeTranscript(body.sourceText);
     const chunks = splitTranscript(normalized, 7000);
     const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
@@ -141,9 +176,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const issue = error.issues[0];
+      const path = issue ? formatIssuePath(issue.path) : "root";
+
       return NextResponse.json(
-        { error: error.issues[0]?.message || "입력값이 올바르지 않습니다." },
-        { status: 400 },
+        { error: `데이터 형식 오류 (${path}): ${issue?.message || "알 수 없는 형식 오류"}` },
+        { status: 500 },
       );
     }
 

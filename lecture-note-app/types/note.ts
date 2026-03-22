@@ -65,6 +65,28 @@ function normalizeQuizType(value: unknown) {
   return "short_answer";
 }
 
+function looksLikeQuizType(value: unknown) {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return [
+    "short_answer",
+    "short answer",
+    "true_false",
+    "true false",
+    "ox",
+    "comparison",
+    "compare",
+  ].includes(normalized);
+}
+
+function looksLikeArtistName(value: string) {
+  const trimmed = value.trim();
+  return Boolean(trimmed) && trimmed.length <= 40 && !/[.!?]/.test(trimmed);
+}
+
 function splitLabelAndBody(value: string) {
   const trimmed = value.trim();
   const separators = [" : ", ": ", " - ", " -", " | "];
@@ -94,6 +116,30 @@ function normalizeCoreConcept(value: unknown) {
       features: [],
       keyPoints: [],
       likelyExam: false,
+    };
+  }
+
+  if (Array.isArray(value)) {
+    const [termValue, definitionValue, ...rest] = value;
+    const listParts = rest.filter((item) => Array.isArray(item));
+    const textParts = rest.filter(
+      (item) =>
+        typeof item === "string" && !/^(true|false|yes|no|y|n|1|0)$/i.test(item.trim()),
+    );
+    const booleanPart = rest.find(
+      (item) =>
+        typeof item === "boolean"
+        || (typeof item === "string" && /^(true|false|yes|no|y|n|1|0)$/i.test(item.trim())),
+    );
+
+    return {
+      term: normalizeString(termValue),
+      definition: normalizeString(definitionValue) || normalizeString(termValue),
+      features: listParts[0] ? normalizeStringArray(listParts[0]) : [],
+      keyPoints: listParts[1]
+        ? normalizeStringArray(listParts[1])
+        : textParts.map((item) => item.trim()).filter(Boolean),
+      likelyExam: normalizeBoolean(booleanPart),
     };
   }
 
@@ -149,6 +195,16 @@ function normalizeStructureNode(value: unknown) {
     };
   }
 
+  if (Array.isArray(value)) {
+    const [topicValue, ...rest] = value;
+    const childSource = rest.length === 1 ? rest[0] : rest;
+
+    return {
+      topic: normalizeString(topicValue),
+      children: normalizeStringArray(childSource),
+    };
+  }
+
   if (!isRecord(value)) {
     return value;
   }
@@ -186,6 +242,30 @@ function normalizeWork(value: unknown) {
       title: value,
       artist: "",
       commentary: [],
+    };
+  }
+
+  if (Array.isArray(value)) {
+    const [titleValue, ...rest] = value;
+    const title = normalizeString(titleValue);
+    let artist = "";
+    let commentarySource: unknown = [];
+
+    if (rest.length === 1) {
+      if (typeof rest[0] === "string" && looksLikeArtistName(rest[0])) {
+        artist = normalizeString(rest[0]);
+      } else {
+        commentarySource = rest[0];
+      }
+    } else if (rest.length >= 2) {
+      artist = normalizeString(rest[0]);
+      commentarySource = rest.slice(1);
+    }
+
+    return {
+      title,
+      artist,
+      commentary: normalizeStringArray(commentarySource),
     };
   }
 
@@ -236,6 +316,18 @@ function normalizeQuizItem(value: unknown) {
       question: value,
       answer: "",
       hint: "",
+    };
+  }
+
+  if (Array.isArray(value)) {
+    const hasType = looksLikeQuizType(value[0]);
+    const offset = hasType ? 1 : 0;
+
+    return {
+      type: hasType ? value[0] : "short_answer",
+      question: normalizeString(value[offset]),
+      answer: normalizeString(value[offset + 1]),
+      hint: normalizeString(value[offset + 2]),
     };
   }
 
