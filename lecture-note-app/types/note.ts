@@ -431,6 +431,53 @@ function normalizeQuizItem(value: unknown) {
   return value;
 }
 
+function normalizeCorrectionItem(value: unknown) {
+  if (typeof value === "string") {
+    const parts = value.split(/\s*(?:->|→)\s*/);
+
+    return {
+      source: normalizeString(parts[0]),
+      corrected: normalizeString(parts[1]) || normalizeString(parts[0]),
+    };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      source: normalizeString(value[0]),
+      corrected: normalizeString(value[1]) || normalizeString(value[0]),
+    };
+  }
+
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  if (
+    "source" in value
+    || "corrected" in value
+    || "original" in value
+    || "heard" in value
+    || "fixed" in value
+  ) {
+    return {
+      source: value.source ?? value.original ?? value.heard,
+      corrected: value.corrected ?? value.fixed ?? value.replacement ?? value.source,
+    };
+  }
+
+  const entries = Object.entries(value);
+
+  if (entries.length === 1) {
+    const [source, corrected] = entries[0];
+    return {
+      source,
+      corrected: normalizeString(corrected) || source,
+    };
+  }
+
+  return value;
+}
+
 const StringField = z.preprocess(normalizeString, z.string());
 const StringArrayField = z.preprocess(normalizeStringArray, z.array(z.string()));
 const BooleanField = z.preprocess(normalizeBoolean, z.boolean());
@@ -479,15 +526,29 @@ export const WorkSchema = z.preprocess(
   }),
 );
 
+export const CorrectionItemSchema = z.preprocess(
+  normalizeCorrectionItem,
+  z.object({
+    source: StringField,
+    corrected: StringField,
+  }),
+);
+
 export const LectureNoteSchema = z.object({
   title: StringField,
   oneSentenceTheme: StringField,
+  restoredContext: StringArrayField.default([]),
   summary: StringArrayField.default([]),
   coreConcepts: z.preprocess(normalizeArrayLike, z.array(CoreConceptSchema)).default([]),
   structure: z.preprocess(normalizeArrayLike, z.array(StructureNodeSchema)).default([]),
   works: z.preprocess(normalizeArrayLike, z.array(WorkSchema)).default([]),
+  practiceFlow: StringArrayField.default([]),
+  practicePoints: StringArrayField.default([]),
   examPoints: StringArrayField.default([]),
+  examAnswerTemplates: StringArrayField.default([]),
   memoryLines: StringArrayField.default([]),
+  presentationLines: StringArrayField.default([]),
+  transcriptCorrections: z.preprocess(normalizeArrayLike, z.array(CorrectionItemSchema)).default([]),
   quiz: z.preprocess(normalizeArrayLike, z.array(QuizItemSchema)).default([]),
 });
 
@@ -495,3 +556,4 @@ export type LectureNote = z.infer<typeof LectureNoteSchema>;
 export type QuizType = z.infer<typeof QuizTypeSchema>;
 export type QuizItem = z.infer<typeof QuizItemSchema>;
 export type Work = z.infer<typeof WorkSchema>;
+export type CorrectionItem = z.infer<typeof CorrectionItemSchema>;

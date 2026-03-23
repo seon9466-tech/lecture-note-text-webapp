@@ -97,9 +97,14 @@ function formatListSection(title: string, items: string[]) {
 function collectProfessorHighlights(note: LectureNote) {
   const candidates = [
     note.oneSentenceTheme,
+    ...note.restoredContext,
     ...note.summary,
+    ...note.practiceFlow,
+    ...note.practicePoints,
     ...note.examPoints,
+    ...note.examAnswerTemplates,
     ...note.memoryLines,
+    ...note.presentationLines,
     ...note.coreConcepts.flatMap((concept) => [
       concept.term,
       concept.definition,
@@ -108,6 +113,7 @@ function collectProfessorHighlights(note: LectureNote) {
     ]),
     ...note.structure.flatMap((node) => [node.topic, ...node.children]),
     ...note.works.flatMap((work) => [work.title, work.artist, ...work.commentary]),
+    ...note.transcriptCorrections.flatMap((item) => [item.source, item.corrected]),
     ...note.quiz.flatMap((quiz) => [quiz.question, quiz.answer, quiz.hint]),
   ];
 
@@ -131,12 +137,26 @@ function collectProfessorHighlights(note: LectureNote) {
   return highlights;
 }
 
+function hasExpandedLectureFormat(note: LectureNote) {
+  return (
+    note.restoredContext.length > 0
+    || note.practiceFlow.length > 0
+    || note.practicePoints.length > 0
+    || note.examAnswerTemplates.length > 0
+    || note.presentationLines.length > 0
+    || note.transcriptCorrections.length > 0
+  );
+}
+
 function buildCopyText(note: LectureNote) {
   const lines: string[] = [];
   const professorHighlights = collectProfessorHighlights(note);
+  const usesExpandedLectureFormat = hasExpandedLectureFormat(note);
 
   if (note.title) lines.push(note.title);
-  if (note.oneSentenceTheme) lines.push(stripStar(note.oneSentenceTheme));
+  if (!usesExpandedLectureFormat && note.oneSentenceTheme) {
+    lines.push(stripStar(note.oneSentenceTheme));
+  }
   lines.push("");
 
   if (professorHighlights.length > 0) {
@@ -145,9 +165,30 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  if (note.summary.length > 0) {
+  if (usesExpandedLectureFormat && note.restoredContext.length > 0) {
+    lines.push("[문맥 복원본]");
+    lines.push(...note.restoredContext.map((item, index) => `${index + 1}) ${stripStar(item)}`));
+    lines.push("");
+  }
+
+  if (!usesExpandedLectureFormat && note.summary.length > 0) {
     lines.push("[핵심 요약]");
     lines.push(...note.summary.map((item) => `- ${stripStar(item)}`));
+    lines.push("");
+  }
+
+  if (note.coreConcepts.length > 0) {
+    lines.push(usesExpandedLectureFormat ? "[핵심 개념 정리]" : "[핵심 개념]");
+    note.coreConcepts.forEach((concept, index) => {
+      lines.push(`${index + 1}. ${stripStar(concept.term)}`);
+      lines.push(`   ${stripStar(concept.definition)}`);
+      if (concept.features.length > 0) {
+        lines.push(`   특징: ${concept.features.map(stripStar).join(" / ")}`);
+      }
+      if (concept.keyPoints.length > 0) {
+        lines.push(`   핵심: ${concept.keyPoints.map(stripStar).join(" / ")}`);
+      }
+    });
     lines.push("");
   }
 
@@ -161,22 +202,20 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  if (note.coreConcepts.length > 0) {
-    lines.push("[핵심 개념]");
-    note.coreConcepts.forEach((concept) => {
-      lines.push(`- ${stripStar(concept.term)}`);
-      lines.push(`  정의: ${stripStar(concept.definition)}`);
-      if (concept.features.length > 0) {
-        lines.push(`  특징: ${concept.features.map(stripStar).join(" / ")}`);
-      }
-      if (concept.keyPoints.length > 0) {
-        lines.push(`  핵심 포인트: ${concept.keyPoints.map(stripStar).join(" / ")}`);
-      }
-    });
+  if (usesExpandedLectureFormat && (note.practiceFlow.length > 0 || note.practicePoints.length > 0)) {
+    lines.push("[수업에서 요구한 작업 방식]");
+    if (note.practiceFlow.length > 0) {
+      lines.push("과제 진행 흐름");
+      lines.push(...note.practiceFlow.map((item) => `- ${stripStar(item)}`));
+    }
+    if (note.practicePoints.length > 0) {
+      lines.push("실습 포인트");
+      lines.push(...note.practicePoints.map((item) => `- ${stripStar(item)}`));
+    }
     lines.push("");
   }
 
-  if (note.structure.length > 0) {
+  if (!usesExpandedLectureFormat && note.structure.length > 0) {
     lines.push("[구조 정리]");
     note.structure.forEach((node) => {
       lines.push(`- ${stripStar(node.topic)}`);
@@ -185,9 +224,41 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  [formatListSection("시험 포인트", note.examPoints), formatListSection("암기 문장", note.memoryLines)]
-    .filter(Boolean)
-    .forEach((section) => lines.push(section));
+  if (usesExpandedLectureFormat && note.examAnswerTemplates.length > 0) {
+    lines.push("[시험 대비용 핵심 문장]");
+    note.examAnswerTemplates.forEach((item, index) => {
+      lines.push(`답안형 정리 ${index + 1}`);
+      lines.push(stripStar(item));
+      lines.push("");
+    });
+  } else {
+    [formatListSection("시험 포인트", note.examPoints), formatListSection("암기 문장", note.memoryLines)]
+      .filter(Boolean)
+      .forEach((section) => lines.push(section));
+  }
+
+  if (usesExpandedLectureFormat && note.presentationLines.length > 0) {
+    lines.push("[과제/발표에 바로 쓸 수 있는 문장]");
+    note.presentationLines.forEach((item, index) => {
+      lines.push(`발표용 문장 예시 ${index + 1}`);
+      lines.push(stripStar(item));
+      lines.push("");
+    });
+  }
+
+  if (usesExpandedLectureFormat && note.transcriptCorrections.length > 0) {
+    lines.push("[녹음 오인식 교정 추정]");
+    note.transcriptCorrections.forEach((item) => {
+      lines.push(`- ${stripStar(item.source)} -> ${stripStar(item.corrected)}`);
+    });
+    lines.push("");
+  }
+
+  if (usesExpandedLectureFormat && note.oneSentenceTheme) {
+    lines.push("[한 줄로 압축한 이 수업의 핵심]");
+    lines.push(stripStar(note.oneSentenceTheme));
+    lines.push("");
+  }
 
   if (note.quiz.length > 0) {
     lines.push("[복습 퀴즈]");
@@ -216,6 +287,10 @@ export default function HomePage() {
   const charCount = useMemo(() => sourceText.trim().length, [sourceText]);
   const professorHighlights = useMemo(
     () => (data ? collectProfessorHighlights(data.note) : []),
+    [data],
+  );
+  const usesExpandedLectureFormat = useMemo(
+    () => (data ? hasExpandedLectureFormat(data.note) : false),
     [data],
   );
 
@@ -481,7 +556,9 @@ export default function HomePage() {
 
               <section className="outputSection">
                 <h3>{data.note.title}</h3>
-                <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
+                {!usesExpandedLectureFormat && (
+                  <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
+                )}
               </section>
 
               {professorHighlights.length > 0 && (
@@ -497,19 +574,34 @@ export default function HomePage() {
                 </section>
               )}
 
-              <section className="outputSection">
-                <h3>핵심 요약</h3>
-                <ul className="bulletList">
-                  {data.note.summary.map((item, index) => (
-                    <li
-                      className={isStarred(item) ? "starredItem" : undefined}
-                      key={`summary-${index}-${item}`}
-                    >
-                      {renderMarkedText(item)}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {usesExpandedLectureFormat && data.note.restoredContext.length > 0 && (
+                <section className="outputSection">
+                  <h3>문맥 복원본</h3>
+                  <div className="workList">
+                    {data.note.restoredContext.map((item, index) => (
+                      <article className="workCard" key={`restored-${index}-${item}`}>
+                        <p className="lead">{renderMarkedText(item)}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {!usesExpandedLectureFormat && (
+                <section className="outputSection">
+                  <h3>핵심 요약</h3>
+                  <ul className="bulletList">
+                    {data.note.summary.map((item, index) => (
+                      <li
+                        className={isStarred(item) ? "starredItem" : undefined}
+                        key={`summary-${index}-${item}`}
+                      >
+                        {renderMarkedText(item)}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
               {data.note.works.length > 0 && (
                 <section className="outputSection">
@@ -535,7 +627,7 @@ export default function HomePage() {
               )}
 
               <section className="outputSection">
-                <h3>핵심 개념</h3>
+                <h3>{usesExpandedLectureFormat ? "핵심 개념 정리" : "핵심 개념"}</h3>
                 <div className="conceptList">
                   {data.note.coreConcepts.map((concept, index) => (
                     <article
@@ -565,57 +657,135 @@ export default function HomePage() {
                 </div>
               </section>
 
-              <section className="outputSection">
-                <h3>구조 정리</h3>
-                <div className="structureList">
-                  {data.note.structure.map((node, index) => (
-                    <article
-                      className="structureCard"
-                      key={`structure-${index}-${node.topic}`}
-                    >
-                      <h4>{stripStar(node.topic)}</h4>
+              {usesExpandedLectureFormat && (data.note.practiceFlow.length > 0 || data.note.practicePoints.length > 0) && (
+                <section className="outputSection">
+                  <h3>수업에서 요구한 작업 방식</h3>
+                  {data.note.practiceFlow.length > 0 && (
+                    <article className="structureCard">
+                      <h4>과제 진행 흐름</h4>
                       <ul className="bulletList">
-                        {node.children.map((child, childIndex) => (
-                          <li
-                            className={isStarred(child) ? "starredItem" : undefined}
-                            key={`child-${index}-${childIndex}-${child}`}
-                          >
-                            {renderMarkedText(child)}
-                          </li>
+                        {data.note.practiceFlow.map((item, index) => (
+                          <li key={`practice-flow-${index}-${item}`}>{renderMarkedText(item)}</li>
                         ))}
                       </ul>
                     </article>
-                  ))}
-                </div>
-              </section>
+                  )}
+                  {data.note.practicePoints.length > 0 && (
+                    <article className="structureCard">
+                      <h4>실습 포인트</h4>
+                      <ul className="bulletList">
+                        {data.note.practicePoints.map((item, index) => (
+                          <li key={`practice-point-${index}-${item}`}>{renderMarkedText(item)}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  )}
+                </section>
+              )}
 
-              <section className="outputSection">
-                <h3>시험 포인트</h3>
-                <ul className="bulletList">
-                  {data.note.examPoints.map((item, index) => (
-                    <li
-                      className={isStarred(item) ? "starredItem" : undefined}
-                      key={`exam-${index}-${item}`}
-                    >
-                      {renderMarkedText(item)}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              {!usesExpandedLectureFormat && (
+                <>
+                  <section className="outputSection">
+                    <h3>구조 정리</h3>
+                    <div className="structureList">
+                      {data.note.structure.map((node, index) => (
+                        <article
+                          className="structureCard"
+                          key={`structure-${index}-${node.topic}`}
+                        >
+                          <h4>{stripStar(node.topic)}</h4>
+                          <ul className="bulletList">
+                            {node.children.map((child, childIndex) => (
+                              <li
+                                className={isStarred(child) ? "starredItem" : undefined}
+                                key={`child-${index}-${childIndex}-${child}`}
+                              >
+                                {renderMarkedText(child)}
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
 
-              <section className="outputSection">
-                <h3>암기 문장</h3>
-                <ul className="bulletList">
-                  {data.note.memoryLines.map((item, index) => (
-                    <li
-                      className={isStarred(item) ? "starredItem" : undefined}
-                      key={`memory-${index}-${item}`}
-                    >
-                      {renderMarkedText(item)}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+                  <section className="outputSection">
+                    <h3>시험 포인트</h3>
+                    <ul className="bulletList">
+                      {data.note.examPoints.map((item, index) => (
+                        <li
+                          className={isStarred(item) ? "starredItem" : undefined}
+                          key={`exam-${index}-${item}`}
+                        >
+                          {renderMarkedText(item)}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+
+                  <section className="outputSection">
+                    <h3>암기 문장</h3>
+                    <ul className="bulletList">
+                      {data.note.memoryLines.map((item, index) => (
+                        <li
+                          className={isStarred(item) ? "starredItem" : undefined}
+                          key={`memory-${index}-${item}`}
+                        >
+                          {renderMarkedText(item)}
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                </>
+              )}
+
+              {usesExpandedLectureFormat && data.note.examAnswerTemplates.length > 0 && (
+                <section className="outputSection">
+                  <h3>시험 대비용 핵심 문장</h3>
+                  <div className="quizList">
+                    {data.note.examAnswerTemplates.map((item, index) => (
+                      <article className="quizCard" key={`exam-template-${index}-${item}`}>
+                        <h4>답안형 정리 {index + 1}</h4>
+                        <p className="lead">{renderMarkedText(item)}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {usesExpandedLectureFormat && data.note.presentationLines.length > 0 && (
+                <section className="outputSection">
+                  <h3>과제/발표에 바로 쓸 수 있는 문장</h3>
+                  <div className="quizList">
+                    {data.note.presentationLines.map((item, index) => (
+                      <article className="quizCard" key={`presentation-${index}-${item}`}>
+                        <h4>발표용 문장 예시 {index + 1}</h4>
+                        <p className="lead">{renderMarkedText(item)}</p>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {usesExpandedLectureFormat && data.note.transcriptCorrections.length > 0 && (
+                <section className="outputSection">
+                  <h3>녹음 오인식 교정 추정</h3>
+                  <ul className="bulletList">
+                    {data.note.transcriptCorrections.map((item, index) => (
+                      <li key={`correction-${index}-${item.source}-${item.corrected}`}>
+                        {stripStar(item.source)} -&gt; {stripStar(item.corrected)}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {usesExpandedLectureFormat && data.note.oneSentenceTheme && (
+                <section className="outputSection">
+                  <h3>한 줄로 압축한 이 수업의 핵심</h3>
+                  <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
+                </section>
+              )}
 
               {data.note.quiz.length > 0 && (
                 <section className="outputSection">
