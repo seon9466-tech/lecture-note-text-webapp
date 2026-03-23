@@ -31,7 +31,7 @@ export function buildUserPrompt(params: {
     normal:
       "Balance brevity and context. In Korean output, write natural full sentence notes rather than noun fragments. Vary the endings naturally.",
     detailed:
-      "Include more explanation, comparison, and nuance while still keeping the notes clear and review-friendly.",
+      "Write it in a story-like lecture flow, as if the professor is speaking directly. Preserve the original wording, order, and transitions as much as possible while still keeping it readable as study notes.",
   };
 
   return [
@@ -52,6 +52,9 @@ export function buildUserPrompt(params: {
     params.withQuiz
       ? "10. quiz must contain 3 to 5 items and each type must be one of: short_answer, true_false, comparison."
       : "10. quiz must be an empty array.",
+    params.density === "detailed"
+      ? "11. In story mode, write in a flowing lecture voice. Keep close to the original source wording, sequence, and examples. Let the notes read like the professor is guiding the class through the topic."
+      : "11. Match the requested density while staying faithful to the source text.",
     "Source text:",
     params.sourceText,
   ].join("\n\n");

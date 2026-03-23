@@ -27,7 +27,7 @@ const sampleText = `로잘린드 크라우스는 현대 조각이 더 이상 받
 const densityLabels: Record<Density, string> = {
   compressed: "핵심 압축형",
   normal: "기본 균형형",
-  detailed: "상세 분석형",
+  detailed: "스토리형",
 };
 
 const quizTypeLabels: Record<QuizType, string> = {
@@ -387,7 +387,7 @@ export default function HomePage() {
                 >
                   <option value="compressed">핵심 압축형</option>
                   <option value="normal">기본 균형형</option>
-                  <option value="detailed">상세 분석형</option>
+                  <option value="detailed">스토리형</option>
                 </select>
               </label>
 
