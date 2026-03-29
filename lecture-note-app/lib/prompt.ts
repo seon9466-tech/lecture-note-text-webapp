@@ -30,9 +30,9 @@ export function buildUserPrompt(params: {
   const densityMap: Record<Density, string> = {
     compressed: "Make it highly compressed for quick review before an exam.",
     normal:
-      "Balance brevity and context. In Korean output, write natural full sentence notes rather than noun fragments. Vary the endings naturally.",
+      "Write thorough, well-organized notes that balance completeness with readability. In Korean output, write natural full sentence notes rather than noun fragments. Vary the endings naturally. Core concepts should use descriptive, thesis-like titles that convey the concept's point (e.g. '사진은 기록보다 새롭게 보기다'). restoredContext should be substantial narrative paragraphs that reconstruct the lecture flow, preserving key quotes and examples from the professor.",
     detailed:
-      "Write it in a story-like lecture flow, as if the professor is speaking directly. Preserve the original wording, order, and transitions as much as possible while still keeping it readable as study notes.",
+      "Write it in a story-like lecture flow, as if the professor is speaking continuously. Preserve the original wording, phrasing, order, and transitions almost verbatim — only remove filler words and obvious repetitions. The notes should read like a cleaned-up transcript where the professor's voice and tone remain intact.",
   };
 
   return [
@@ -41,9 +41,9 @@ export function buildUserPrompt(params: {
     `Detail level: ${densityMap[params.density]}`,
     `Include quiz: ${params.withQuiz ? "Yes" : "No"}`,
     "Requirements:",
-    "1. restoredContext must reconstruct the lecture flow in 4 to 8 sentence-style items, almost like a cleaned lecture transcript.",
+    "1. restoredContext must reconstruct the lecture flow in 4 to 8 paragraph-style items. Each item should be a substantial paragraph covering a distinct part of the lecture, naturally incorporating professor quotes and examples where present.",
     "2. summary must contain 3 to 5 bullet-style items.",
-    "3. coreConcepts must clearly describe definition, features, keyPoints, and likelyExam.",
+    "3. coreConcepts must have a descriptive, thesis-like term that conveys the concept's point (not just a bare noun), and clearly describe definition, features, keyPoints, and likelyExam.",
     "4. structure must represent a review-friendly topic tree with parent topics and child points.",
     "5. works must be an array. If one or more specific works are discussed, create one entry per work with title, artist, and commentary. Every work item must include artist. Artist must be the creator, not a museum, collection, place, or period label. If you can confidently supplement the artist, do so. If the artist is unknown, use '미상'. If no specific work is discussed, works must be an empty array.",
     "6. practiceFlow must summarize the assignment or class process as short steps in sequence.",
@@ -61,7 +61,7 @@ export function buildUserPrompt(params: {
       ? "17. quiz must contain 3 to 5 items and each type must be one of: short_answer, true_false, comparison."
       : "17. quiz must be an empty array.",
     params.density === "detailed"
-      ? "18. In story mode, write in a flowing lecture voice. Keep close to the original source wording, sequence, and examples. Let the notes read like the professor is guiding the class through the topic."
+      ? "18. In story mode, restoredContext should be 6 to 12 items and preserve the original text almost verbatim. Keep the professor's exact phrasing, examples, and speaking rhythm. Only clean up filler words and speech-to-text noise — do not rephrase or summarize. The result should read like the professor is talking directly to the student."
       : "18. Match the requested density while staying faithful to the source text.",
     "Source text:",
     params.sourceText,
