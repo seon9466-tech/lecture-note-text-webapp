@@ -215,11 +215,11 @@ function buildCopyText(note: LectureNote) {
     });
   }
 
-  // 작품 정리 (중복 제거)
-  const uniqueWorks = Array.from(
-    new Map(note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
-  );
-  if (uniqueWorks.length > 0) {
+  // 작품 정리 (스토리형/확장형만 표시, 중복 제거)
+  if (usesExpandedLectureFormat && note.works.length > 0) {
+    const uniqueWorks = Array.from(
+      new Map(note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
+    );
     lines.push("## 🎨 작품 정리");
     lines.push("");
     uniqueWorks.forEach((work) => {
@@ -663,7 +663,7 @@ export default function HomePage() {
                 </div>
               </section>
 
-              {data.note.works.length > 0 && (
+              {usesExpandedLectureFormat && data.note.works.length > 0 && (
                 <section className="outputSection">
                   <h3>🎨 작품 정리</h3>
                   <div className="workList">
