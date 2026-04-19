@@ -43,7 +43,7 @@ export function buildUserPrompt(params: {
     "Requirements:",
     "1. restoredContext must reconstruct the lecture flow in 4 to 8 paragraph-style items. Each item should be a substantial paragraph covering a distinct part of the lecture, naturally incorporating professor quotes and examples where present.",
     "2. summary must contain 3 to 5 bullet-style items.",
-    "3. coreConcepts must have a descriptive, thesis-like term that conveys the concept's point (not just a bare noun), and clearly describe definition, features, keyPoints, and likelyExam.",
+    "3. coreConcepts must have a descriptive, thesis-like term that conveys the group's point (not just a bare noun). Each concept group should use subConcepts (array of { term: string, points: string[] }) to organize 2-4 sub-sections in [n-m] style. Each sub-concept term should be a concise descriptive title; points should be full sentence-style bullets, including timestamps from the source text if present (e.g. [00:00]). Also include an overall definition for the group.",
     "4. structure must represent a review-friendly topic tree with parent topics and child points.",
     "5. works must be an array. If one or more specific works are discussed, create one entry per work with title, artist, and commentary. Every work item must include artist. Artist must be the creator, not a museum, collection, place, or period label. If you can confidently supplement the artist, do so. If the artist is unknown, use '미상'. If no specific work is discussed, works must be an empty array.",
     "6. practiceFlow must summarize the assignment or class process as short steps in sequence.",

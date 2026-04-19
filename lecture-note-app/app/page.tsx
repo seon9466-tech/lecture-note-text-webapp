@@ -59,7 +59,7 @@ function renderMarkedText(value: string) {
 
   return (
     <span className={emphasized ? "starredText" : undefined}>
-      {emphasized ? `* ${text}` : text}
+      {emphasized ? `⭐ ${text}` : text}
     </span>
   );
 }
@@ -76,7 +76,7 @@ function renderPillList(items: string[], keyPrefix: string) {
             className={emphasized ? "pill starred" : "pill"}
             key={`${keyPrefix}-${index}-${text}`}
           >
-            {emphasized ? `* ${text}` : text}
+            {emphasized ? `⭐ ${text}` : text}
           </span>
         );
       })}
@@ -110,6 +110,7 @@ function collectProfessorHighlights(note: LectureNote) {
       concept.definition,
       ...concept.features,
       ...concept.keyPoints,
+      ...concept.subConcepts.flatMap((sub) => [sub.term, ...sub.points]),
     ]),
     ...note.structure.flatMap((node) => [node.topic, ...node.children]),
     ...note.works.flatMap((work) => [work.title, work.artist, ...work.commentary]),
@@ -153,68 +154,106 @@ function buildCopyText(note: LectureNote) {
   const professorHighlights = collectProfessorHighlights(note);
   const usesExpandedLectureFormat = hasExpandedLectureFormat(note);
 
-  if (note.title) lines.push(note.title);
-  if (!usesExpandedLectureFormat && note.oneSentenceTheme) {
-    lines.push(stripStar(note.oneSentenceTheme));
-  }
-  lines.push("");
-
-  if (professorHighlights.length > 0) {
-    lines.push("[교수님 강조]");
-    lines.push(...professorHighlights.map((item) => `- ${item}`));
+  // 제목
+  if (note.title) {
+    lines.push(`# ${note.title}`);
     lines.push("");
   }
 
+  // 🎯 주제
+  if (note.oneSentenceTheme) {
+    lines.push("## 🎯 주제");
+    lines.push(`- ${stripStar(note.oneSentenceTheme)}`);
+    lines.push("");
+    lines.push("");
+  }
+
+  // ⭐ 교수님 강조
+  if (professorHighlights.length > 0) {
+    lines.push("## ⭐ 교수님 강조");
+    professorHighlights.forEach((item) => lines.push(`- ${item}`));
+    lines.push("");
+    lines.push("");
+  }
+
+  // 문맥 복원본 (expanded)
   if (usesExpandedLectureFormat && note.restoredContext.length > 0) {
     lines.push("[문맥 복원본]");
-    lines.push(...note.restoredContext.map((item, index) => `${index + 1}) ${stripStar(item)}`));
-    lines.push("");
-  }
-
-  if (!usesExpandedLectureFormat && note.summary.length > 0) {
-    lines.push("[핵심 요약]");
-    lines.push(...note.summary.map((item) => `- ${stripStar(item)}`));
-    lines.push("");
-  }
-
-  if (note.coreConcepts.length > 0) {
-    lines.push(usesExpandedLectureFormat ? "[핵심 개념 정리]" : "[핵심 개념]");
-    note.coreConcepts.forEach((concept, index) => {
-      lines.push(`${index + 1}. ${stripStar(concept.term)}`);
-      lines.push(`   ${stripStar(concept.definition)}`);
-      if (concept.features.length > 0) {
-        lines.push(`   특징: ${concept.features.map(stripStar).join(" / ")}`);
-      }
-      if (concept.keyPoints.length > 0) {
-        lines.push(`   핵심: ${concept.keyPoints.map(stripStar).join(" / ")}`);
-      }
+    note.restoredContext.forEach((item, index) => {
+      lines.push(`${index + 1}) ${stripStar(item)}`);
     });
     lines.push("");
   }
 
+  // 핵심 요약 (compressed)
+  if (!usesExpandedLectureFormat && note.summary.length > 0) {
+    lines.push("[핵심 요약]");
+    note.summary.forEach((item) => lines.push(`- ${stripStar(item)}`));
+    lines.push("");
+  }
+
+  // 📝 핵심개념 정리
+  if (note.coreConcepts.length > 0) {
+    lines.push("## 📝 핵심개념 정리");
+    lines.push("");
+
+    note.coreConcepts.forEach((concept, ci) => {
+      lines.push(`### ${ci + 1}. ${stripStar(concept.term)}`);
+      lines.push("");
+
+      if (concept.definition) {
+        lines.push(stripStar(concept.definition));
+        lines.push("");
+      }
+
+      if (concept.subConcepts.length > 0) {
+        concept.subConcepts.forEach((sub, si) => {
+          const termEmphasis = isStarred(sub.term) ? "⭐ " : "";
+          lines.push(`**[${ci + 1}-${si + 1}] ${termEmphasis}${stripStar(sub.term)}**`);
+          sub.points.forEach((point) => {
+            const pointEmphasis = isStarred(point) ? "⭐ " : "";
+            lines.push(`- ${pointEmphasis}${stripStar(point)}`);
+          });
+          lines.push("");
+        });
+      } else {
+        if (concept.features.length > 0) {
+          concept.features.forEach((f) => lines.push(`- ${stripStar(f)}`));
+          lines.push("");
+        }
+        if (concept.keyPoints.length > 0) {
+          concept.keyPoints.forEach((k) => lines.push(`- ${stripStar(k)}`));
+          lines.push("");
+        }
+      }
+    });
+  }
+
+  // 작품 정리
   if (note.works.length > 0) {
     lines.push("[작품 정리]");
     note.works.forEach((work) => {
-      const titleLine = `- ${stripStar(work.title)} / ${renderArtist(work.artist)}`;
-      lines.push(titleLine);
+      lines.push(`- ${stripStar(work.title)} / ${renderArtist(work.artist)}`);
       work.commentary.forEach((line) => lines.push(`  - ${stripStar(line)}`));
     });
     lines.push("");
   }
 
+  // 수업에서 요구한 작업 방식 (expanded)
   if (usesExpandedLectureFormat && (note.practiceFlow.length > 0 || note.practicePoints.length > 0)) {
     lines.push("[수업에서 요구한 작업 방식]");
     if (note.practiceFlow.length > 0) {
       lines.push("과제 진행 흐름");
-      lines.push(...note.practiceFlow.map((item) => `- ${stripStar(item)}`));
+      note.practiceFlow.forEach((item) => lines.push(`- ${stripStar(item)}`));
     }
     if (note.practicePoints.length > 0) {
       lines.push("실습 포인트");
-      lines.push(...note.practicePoints.map((item) => `- ${stripStar(item)}`));
+      note.practicePoints.forEach((item) => lines.push(`- ${stripStar(item)}`));
     }
     lines.push("");
   }
 
+  // 구조 정리 (compressed)
   if (!usesExpandedLectureFormat && note.structure.length > 0) {
     lines.push("[구조 정리]");
     note.structure.forEach((node) => {
@@ -224,6 +263,7 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
+  // 시험 대비용 핵심 문장 (expanded)
   if (usesExpandedLectureFormat && note.examAnswerTemplates.length > 0) {
     lines.push("[시험 대비용 핵심 문장]");
     note.examAnswerTemplates.forEach((item, index) => {
@@ -237,6 +277,7 @@ function buildCopyText(note: LectureNote) {
       .forEach((section) => lines.push(section));
   }
 
+  // 과제/발표에 바로 쓸 수 있는 문장 (expanded)
   if (usesExpandedLectureFormat && note.presentationLines.length > 0) {
     lines.push("[과제/발표에 바로 쓸 수 있는 문장]");
     note.presentationLines.forEach((item, index) => {
@@ -246,6 +287,7 @@ function buildCopyText(note: LectureNote) {
     });
   }
 
+  // 녹음 오인식 교정 추정 (expanded)
   if (usesExpandedLectureFormat && note.transcriptCorrections.length > 0) {
     lines.push("[녹음 오인식 교정 추정]");
     note.transcriptCorrections.forEach((item) => {
@@ -254,12 +296,7 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  if (usesExpandedLectureFormat && note.oneSentenceTheme) {
-    lines.push("[한 줄로 압축한 이 수업의 핵심]");
-    lines.push(stripStar(note.oneSentenceTheme));
-    lines.push("");
-  }
-
+  // 복습 퀴즈
   if (note.quiz.length > 0) {
     lines.push("[복습 퀴즈]");
     note.quiz.forEach((quiz, index) => {
@@ -556,14 +593,18 @@ export default function HomePage() {
 
               <section className="outputSection">
                 <h3>{data.note.title}</h3>
-                {!usesExpandedLectureFormat && (
-                  <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
-                )}
               </section>
+
+              {data.note.oneSentenceTheme && (
+                <section className="outputSection">
+                  <h3>🎯 주제</h3>
+                  <p className="lead">{renderMarkedText(data.note.oneSentenceTheme)}</p>
+                </section>
+              )}
 
               {professorHighlights.length > 0 && (
                 <section className="outputSection">
-                  <h3>교수님 강조</h3>
+                  <h3>⭐ 교수님 강조</h3>
                   <ul className="bulletList">
                     {professorHighlights.map((item, index) => (
                       <li className="starredItem" key={`professor-${index}-${item}`}>
@@ -627,31 +668,61 @@ export default function HomePage() {
               )}
 
               <section className="outputSection">
-                <h3>{usesExpandedLectureFormat ? "핵심 개념 정리" : "핵심 개념"}</h3>
+                <h3>📝 핵심개념 정리</h3>
                 <div className="conceptList">
-                  {data.note.coreConcepts.map((concept, index) => (
+                  {data.note.coreConcepts.map((concept, ci) => (
                     <article
                       className="conceptCard"
-                      key={`concept-${index}-${concept.term}`}
+                      key={`concept-${ci}-${concept.term}`}
                     >
                       <div className="conceptHeader">
-                        <h4>{stripStar(concept.term)}</h4>
+                        <h4>{ci + 1}. {stripStar(concept.term)}</h4>
                         <span className="chip">
                           {renderLikelyExam(concept.likelyExam)}
                         </span>
                       </div>
-                      <div className="kv">
-                        <strong>정의</strong>
-                        <span>{renderMarkedText(concept.definition)}</span>
-                      </div>
-                      <div className="kv">
-                        <strong>특징</strong>
-                        <div>{renderPillList(concept.features, `feature-${index}`)}</div>
-                      </div>
-                      <div className="kv">
-                        <strong>핵심 포인트</strong>
-                        <div>{renderPillList(concept.keyPoints, `keypoint-${index}`)}</div>
-                      </div>
+                      {concept.definition && (
+                        <div className="kv">
+                          <strong>정의</strong>
+                          <span>{renderMarkedText(concept.definition)}</span>
+                        </div>
+                      )}
+                      {concept.subConcepts.length > 0 ? (
+                        <div className="subConceptList">
+                          {concept.subConcepts.map((sub, si) => (
+                            <div className="subConceptItem" key={`sub-${ci}-${si}-${sub.term}`}>
+                              <h5 className={isStarred(sub.term) ? "starredText" : undefined}>
+                                [{ci + 1}-{si + 1}] {isStarred(sub.term) ? "⭐ " : ""}{stripStar(sub.term)}
+                              </h5>
+                              <ul className="bulletList">
+                                {sub.points.map((point, pi) => (
+                                  <li
+                                    className={isStarred(point) ? "starredItem" : undefined}
+                                    key={`point-${ci}-${si}-${pi}`}
+                                  >
+                                    {renderMarkedText(point)}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <>
+                          {concept.features.length > 0 && (
+                            <div className="kv">
+                              <strong>특징</strong>
+                              <div>{renderPillList(concept.features, `feature-${ci}`)}</div>
+                            </div>
+                          )}
+                          {concept.keyPoints.length > 0 && (
+                            <div className="kv">
+                              <strong>핵심 포인트</strong>
+                              <div>{renderPillList(concept.keyPoints, `keypoint-${ci}`)}</div>
+                            </div>
+                          )}
+                        </>
+                      )}
                     </article>
                   ))}
                 </div>

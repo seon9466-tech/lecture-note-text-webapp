@@ -498,6 +498,33 @@ export const QuizItemSchema = z.preprocess(
   }),
 );
 
+function normalizeSubConcept(value: unknown) {
+  if (typeof value === "string") {
+    return { term: value, points: [] };
+  }
+
+  if (Array.isArray(value)) {
+    const [termValue, ...rest] = value;
+    const pointSource = rest.length === 1 ? rest[0] : rest;
+    return {
+      term: normalizeString(termValue),
+      points: normalizeStringArray(pointSource),
+    };
+  }
+
+  if (!isRecord(value)) return value;
+
+  return value;
+}
+
+export const SubConceptSchema = z.preprocess(
+  normalizeSubConcept,
+  z.object({
+    term: StringField,
+    points: StringArrayField.default([]),
+  }),
+);
+
 export const CoreConceptSchema = z.preprocess(
   normalizeCoreConcept,
   z.object({
@@ -505,6 +532,7 @@ export const CoreConceptSchema = z.preprocess(
     definition: StringField,
     features: StringArrayField.default([]),
     keyPoints: StringArrayField.default([]),
+    subConcepts: z.preprocess(normalizeArrayLike, z.array(SubConceptSchema)).default([]),
     likelyExam: BooleanField.default(false),
   }),
 );
@@ -555,5 +583,6 @@ export const LectureNoteSchema = z.object({
 export type LectureNote = z.infer<typeof LectureNoteSchema>;
 export type QuizType = z.infer<typeof QuizTypeSchema>;
 export type QuizItem = z.infer<typeof QuizItemSchema>;
+export type SubConcept = z.infer<typeof SubConceptSchema>;
 export type Work = z.infer<typeof WorkSchema>;
 export type CorrectionItem = z.infer<typeof CorrectionItemSchema>;
