@@ -7,7 +7,7 @@ export function buildSystemPrompt() {
     "Do not add facts that are not supported by the source text.",
     "Preserve the source language whenever possible.",
     "Keep the structure easy to review and faithful to the lecture.",
-    "Prefer a rich lecture-note structure that includes restoredContext, coreConcepts, works, practiceFlow, practicePoints, examAnswerTemplates, presentationLines, transcriptCorrections, and oneSentenceTheme.",
+    "Adjust output richness to the requested density level: normal density focuses on compact concept notes; story density uses the full expanded structure with all narrative sections.",
     "If quiz items are requested, create answerable questions based only on the source text.",
     "If the lecture discusses specific works or artworks, separate them into a dedicated works array.",
     "Each work item should include title, artist, and commentary.",
@@ -30,7 +30,7 @@ export function buildUserPrompt(params: {
   const densityMap: Record<Density, string> = {
     compressed: "Make it highly compressed for quick review before an exam.",
     normal:
-      "Write thorough, well-organized notes that balance completeness with readability. In Korean output, write natural full sentence notes rather than noun fragments. Vary the endings naturally. Core concepts should use descriptive, thesis-like titles that convey the concept's point (e.g. '사진은 기록보다 새롭게 보기다'). restoredContext should be substantial narrative paragraphs that reconstruct the lecture flow, preserving key quotes and examples from the professor.",
+      "Write compact, structured study notes focused on concept clarity. Leave restoredContext, practiceFlow, practicePoints, examAnswerTemplates, presentationLines, and transcriptCorrections as empty arrays — do not fill them. Focus entirely on oneSentenceTheme, coreConcepts (with subConcepts), works, examPoints, and memoryLines. In Korean output, write natural notes and vary sentence endings.",
     detailed:
       "Write it in a story-like lecture flow, as if the professor is speaking continuously. Preserve the original wording, phrasing, order, and transitions almost verbatim — only remove filler words and obvious repetitions. The notes should read like a cleaned-up transcript where the professor's voice and tone remain intact.",
   };
@@ -41,20 +41,34 @@ export function buildUserPrompt(params: {
     `Detail level: ${densityMap[params.density]}`,
     `Include quiz: ${params.withQuiz ? "Yes" : "No"}`,
     "Requirements:",
-    "1. restoredContext must reconstruct the lecture flow in 4 to 8 paragraph-style items. Each item should be a substantial paragraph covering a distinct part of the lecture, naturally incorporating professor quotes and examples where present.",
+    params.density === "detailed"
+      ? "1. restoredContext: write 6 to 12 substantial paragraph-style items that reconstruct the lecture flow almost verbatim, preserving professor quotes and examples."
+      : "1. restoredContext: set to an empty array [].",
     "2. summary must contain 3 to 5 bullet-style items.",
-    "3. coreConcepts must have a descriptive, thesis-like term that conveys the group's point (not just a bare noun). Each concept group should use subConcepts (array of { term: string, points: string[] }) to organize 2-4 sub-sections in [n-m] style. Each sub-concept term should be a concise descriptive title; points should be full sentence-style bullets, including timestamps from the source text if present (e.g. [00:00]). Also include an overall definition for the group.",
+    params.density === "normal"
+      ? "3. coreConcepts: term must be a short, neutral topic label (e.g. '그리스 조각의 기본 개념') — NOT a thesis statement or full sentence. Keep definition very short (one sentence) or leave empty. Use subConcepts (array of { term, points }) to organize 2–5 sub-sections per concept group. Each sub-concept term is a concise descriptive title; points must be short, factual bullets — when timestamps appear in the source text (e.g. [00:00]), preserve them at the end of the relevant bullet."
+      : "3. coreConcepts must have a descriptive, thesis-like term that conveys the group's point. Each concept group should use subConcepts (array of { term: string, points: string[] }) for 2-4 sub-sections. Each sub-concept term is a concise descriptive title; points are full sentence-style bullets including timestamps from the source if present (e.g. [00:00]). Also include an overall definition for the group.",
     "4. structure must represent a review-friendly topic tree with parent topics and child points.",
     "5. works must be an array. If one or more specific works are discussed, create one entry per work with title, artist, and commentary. Every work item must include artist. Artist must be the creator, not a museum, collection, place, or period label. If you can confidently supplement the artist, do so. If the artist is unknown, use '미상'. If no specific work is discussed, works must be an empty array.",
-    "6. practiceFlow must summarize the assignment or class process as short steps in sequence.",
-    "7. practicePoints must capture practical instructions, cautions, and execution tips.",
+    params.density === "normal"
+      ? "6. practiceFlow: set to an empty array []."
+      : "6. practiceFlow must summarize the assignment or class process as short steps in sequence.",
+    params.density === "normal"
+      ? "7. practicePoints: set to an empty array []."
+      : "7. practicePoints must capture practical instructions, cautions, and execution tips.",
     "8. examPoints must focus on likely definitions, comparisons, critiques, or short essay prompts.",
-    "9. examAnswerTemplates must contain 2 to 4 longer answer-style paragraphs that can be reused in exams.",
+    params.density === "normal"
+      ? "9. examAnswerTemplates: set to an empty array []."
+      : "9. examAnswerTemplates must contain 2 to 4 longer answer-style paragraphs that can be reused in exams.",
     "10. memoryLines must be short, memorable review lines.",
-    "11. presentationLines must contain 2 to 4 polished sentences or short paragraphs that can be used directly in a class presentation.",
-    "12. transcriptCorrections must be an array of objects with source and corrected when obvious speech-to-text mistakes can be inferred from context. If none are clear, return an empty array.",
-    "13. oneSentenceTheme must work like a final one-line compression of the lecture's core message.",
-    "14. In Korean output, restoredContext, summary items, keyPoints, examPoints, examAnswerTemplates, memoryLines, presentationLines, and work commentary should read like natural sentence-style notes. Avoid noun-only fragments.",
+    params.density === "normal"
+      ? "11. presentationLines: set to an empty array []."
+      : "11. presentationLines must contain 2 to 4 polished sentences or short paragraphs that can be used directly in a class presentation.",
+    params.density === "normal"
+      ? "12. transcriptCorrections: set to an empty array []."
+      : "12. transcriptCorrections must be an array of objects with source and corrected when obvious speech-to-text mistakes can be inferred from context. If none are clear, return an empty array.",
+    "13. oneSentenceTheme must be a focused 1–2 sentence summary of the specific lecture topic — not a general statement about studying or methodology.",
+    "14. In Korean output, summary items, keyPoints, examPoints, memoryLines, and work commentary should read like natural sentence-style notes. Avoid noun-only fragments.",
     "15. Vary Korean sentence endings naturally. Do not make every line end with the same suffix.",
     "16. When the professor emphasized something, prefix that item with '* '. Mark every emphasized point explicitly.",
     params.withQuiz
