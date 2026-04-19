@@ -215,20 +215,6 @@ function buildCopyText(note: LectureNote) {
     });
   }
 
-  // 작품 정리 (스토리형/확장형만 표시, 중복 제거)
-  if (usesExpandedLectureFormat && note.works.length > 0) {
-    const uniqueWorks = Array.from(
-      new Map(note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
-    );
-    lines.push("## 🎨 작품 정리");
-    lines.push("");
-    uniqueWorks.forEach((work) => {
-      lines.push(`**${stripStar(work.title)}** / ${renderArtist(work.artist)}`);
-      work.commentary.forEach((line) => lines.push(`- ${stripStar(line)}`));
-      lines.push("");
-    });
-    lines.push("");
-  }
 
   // 수업에서 요구한 작업 방식 (expanded)
   if (usesExpandedLectureFormat && (note.practiceFlow.length > 0 || note.practicePoints.length > 0)) {
@@ -662,31 +648,6 @@ export default function HomePage() {
                   ))}
                 </div>
               </section>
-
-              {usesExpandedLectureFormat && data.note.works.length > 0 && (
-                <section className="outputSection">
-                  <h3>🎨 작품 정리</h3>
-                  <div className="workList">
-                    {Array.from(
-                      new Map(data.note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
-                    ).map((work, index) => (
-                      <article className="workCard" key={`work-${index}-${work.title}`}>
-                        <h4>{stripStar(work.title)}<span className="workMeta"> / {renderArtist(work.artist)}</span></h4>
-                        <ul className="bulletList">
-                          {work.commentary.map((line, lineIndex) => (
-                            <li
-                              className={isStarred(line) ? "starredItem" : undefined}
-                              key={`work-line-${index}-${lineIndex}-${line}`}
-                            >
-                              {renderMarkedText(line)}
-                            </li>
-                          ))}
-                        </ul>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
 
               {usesExpandedLectureFormat && (data.note.practiceFlow.length > 0 || data.note.practicePoints.length > 0) && (
                 <section className="outputSection">
