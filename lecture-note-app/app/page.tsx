@@ -84,12 +84,13 @@ function renderPillList(items: string[], keyPrefix: string) {
   );
 }
 
-function formatListSection(title: string, items: string[]) {
+function formatMarkdownSection(emoji: string, title: string, items: string[]) {
   if (items.length === 0) return "";
 
   return [
-    `[${title}]`,
+    `## ${emoji} ${title}`,
     ...items.map((item) => `- ${stripStar(item)}`),
+    "",
     "",
   ].join("\n");
 }
@@ -185,10 +186,11 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  // 핵심 요약 (compressed)
+  // 핵심 요약 (compressed/normal)
   if (!usesExpandedLectureFormat && note.summary.length > 0) {
-    lines.push("[핵심 요약]");
+    lines.push("## 📋 핵심 요약");
     note.summary.forEach((item) => lines.push(`- ${stripStar(item)}`));
+    lines.push("");
     lines.push("");
   }
 
@@ -231,10 +233,12 @@ function buildCopyText(note: LectureNote) {
 
   // 작품 정리
   if (note.works.length > 0) {
-    lines.push("[작품 정리]");
+    lines.push("## 🎨 작품 정리");
+    lines.push("");
     note.works.forEach((work) => {
-      lines.push(`- ${stripStar(work.title)} / ${renderArtist(work.artist)}`);
-      work.commentary.forEach((line) => lines.push(`  - ${stripStar(line)}`));
+      lines.push(`**${stripStar(work.title)}** / ${renderArtist(work.artist)}`);
+      work.commentary.forEach((line) => lines.push(`- ${stripStar(line)}`));
+      lines.push("");
     });
     lines.push("");
   }
@@ -253,26 +257,21 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  // 구조 정리 (compressed)
-  if (!usesExpandedLectureFormat && note.structure.length > 0) {
-    lines.push("[구조 정리]");
-    note.structure.forEach((node) => {
-      lines.push(`- ${stripStar(node.topic)}`);
-      node.children.forEach((child) => lines.push(`  - ${stripStar(child)}`));
-    });
-    lines.push("");
-  }
-
   // 시험 대비용 핵심 문장 (expanded)
   if (usesExpandedLectureFormat && note.examAnswerTemplates.length > 0) {
-    lines.push("[시험 대비용 핵심 문장]");
+    lines.push("## 📌 시험 대비용 핵심 문장");
+    lines.push("");
     note.examAnswerTemplates.forEach((item, index) => {
-      lines.push(`답안형 정리 ${index + 1}`);
+      lines.push(`**답안형 정리 ${index + 1}**`);
       lines.push(stripStar(item));
       lines.push("");
     });
+    lines.push("");
   } else {
-    [formatListSection("시험 포인트", note.examPoints), formatListSection("암기 문장", note.memoryLines)]
+    [
+      formatMarkdownSection("📌", "시험 포인트", note.examPoints),
+      formatMarkdownSection("💡", "암기 문장", note.memoryLines),
+    ]
       .filter(Boolean)
       .forEach((section) => lines.push(section));
   }
@@ -298,7 +297,8 @@ function buildCopyText(note: LectureNote) {
 
   // 복습 퀴즈
   if (note.quiz.length > 0) {
-    lines.push("[복습 퀴즈]");
+    lines.push("## ❓ 복습 퀴즈");
+    lines.push("");
     note.quiz.forEach((quiz, index) => {
       lines.push(`${index + 1}. (${quizTypeLabels[quiz.type]}) ${stripStar(quiz.question)}`);
       lines.push(`   정답: ${stripStar(quiz.answer)}`);
