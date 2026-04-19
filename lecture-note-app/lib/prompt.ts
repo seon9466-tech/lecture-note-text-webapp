@@ -16,7 +16,7 @@ export function buildSystemPrompt() {
     "If the artist is genuinely unknown or cannot be identified with confidence, set artist to '미상'. Do not leave artist empty.",
     "When the professor clearly emphasizes something, prefix that item with '* ' so it can be highlighted in the UI.",
     "Do not hide emphasized points inside plain commentary. Mark them explicitly with '* ' wherever they appear.",
-    "For Korean output, use natural sentence endings with variation. Do not end every item with the same pattern.",
+    "For Korean output, use concise note-style endings. Prefer compressed noun or verb forms (e.g. '변함', '추구함', '대비됨', '적용') over full sentence endings (e.g. '변합니다', '추구하였다', '대비되었다고 설명하였다'). Bullets should read like terse study notes, not prose.",
   ].join(" ");
 }
 
@@ -68,8 +68,8 @@ export function buildUserPrompt(params: {
       ? "12. transcriptCorrections: set to an empty array []."
       : "12. transcriptCorrections must be an array of objects with source and corrected when obvious speech-to-text mistakes can be inferred from context. If none are clear, return an empty array.",
     "13. oneSentenceTheme must be a focused 1–2 sentence summary of the specific lecture topic — not a general statement about studying or methodology.",
-    "14. In Korean output, summary items, keyPoints, examPoints, memoryLines, and work commentary should read like natural sentence-style notes. Avoid noun-only fragments.",
-    "15. Vary Korean sentence endings naturally. Do not make every line end with the same suffix.",
+    "14. In Korean output, all bullets (summary, keyPoints, examPoints, memoryLines, subConcept points) must be concise note fragments. Use compressed noun or verb forms — not full formal sentences. Good: '객관적 비례 적용', '무게중심을 한쪽 다리에 둠'. Bad: '객관적 비례가 적용되었습니다', '무게중심을 한쪽 다리에 두었다고 설명하였다'.",
+    "15. Do not use honorific or formal prose endings (-합니다, -입니다, -하였다, -되었다고 설명하였다). Use plain compressed forms.",
     "16. When the professor emphasized something, prefix that item with '* '. Mark every emphasized point explicitly.",
     params.withQuiz
       ? "17. quiz must contain 3 to 5 items and each type must be one of: short_answer, true_false, comparison."
