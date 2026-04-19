@@ -152,7 +152,6 @@ function hasExpandedLectureFormat(note: LectureNote) {
 
 function buildCopyText(note: LectureNote) {
   const lines: string[] = [];
-  const professorHighlights = collectProfessorHighlights(note);
   const usesExpandedLectureFormat = hasExpandedLectureFormat(note);
 
   // 제목
@@ -169,28 +168,13 @@ function buildCopyText(note: LectureNote) {
     lines.push("");
   }
 
-  // ⭐ 교수님 강조
-  if (professorHighlights.length > 0) {
-    lines.push("## ⭐ 교수님 강조");
-    professorHighlights.forEach((item) => lines.push(`- ${item}`));
-    lines.push("");
-    lines.push("");
-  }
-
-  // 문맥 복원본 (expanded)
+  // 문맥 복원본 (expanded only)
   if (usesExpandedLectureFormat && note.restoredContext.length > 0) {
-    lines.push("[문맥 복원본]");
+    lines.push("## 📖 문맥 복원본");
+    lines.push("");
     note.restoredContext.forEach((item, index) => {
       lines.push(`${index + 1}) ${stripStar(item)}`);
     });
-    lines.push("");
-  }
-
-  // 핵심 요약 (compressed/normal)
-  if (!usesExpandedLectureFormat && note.summary.length > 0) {
-    lines.push("## 📋 핵심 요약");
-    note.summary.forEach((item) => lines.push(`- ${stripStar(item)}`));
-    lines.push("");
     lines.push("");
   }
 
@@ -602,22 +586,9 @@ export default function HomePage() {
                 </section>
               )}
 
-              {professorHighlights.length > 0 && (
-                <section className="outputSection">
-                  <h3>⭐ 교수님 강조</h3>
-                  <ul className="bulletList">
-                    {professorHighlights.map((item, index) => (
-                      <li className="starredItem" key={`professor-${index}-${item}`}>
-                        <span className="starredText">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
               {usesExpandedLectureFormat && data.note.restoredContext.length > 0 && (
                 <section className="outputSection">
-                  <h3>문맥 복원본</h3>
+                  <h3>📖 문맥 복원본</h3>
                   <div className="workList">
                     {data.note.restoredContext.map((item, index) => (
                       <article className="workCard" key={`restored-${index}-${item}`}>
@@ -625,22 +596,6 @@ export default function HomePage() {
                       </article>
                     ))}
                   </div>
-                </section>
-              )}
-
-              {!usesExpandedLectureFormat && (
-                <section className="outputSection">
-                  <h3>핵심 요약</h3>
-                  <ul className="bulletList">
-                    {data.note.summary.map((item, index) => (
-                      <li
-                        className={isStarred(item) ? "starredItem" : undefined}
-                        key={`summary-${index}-${item}`}
-                      >
-                        {renderMarkedText(item)}
-                      </li>
-                    ))}
-                  </ul>
                 </section>
               )}
 
@@ -754,60 +709,36 @@ export default function HomePage() {
                 </section>
               )}
 
-              {!usesExpandedLectureFormat && (
-                <>
-                  <section className="outputSection">
-                    <h3>구조 정리</h3>
-                    <div className="structureList">
-                      {data.note.structure.map((node, index) => (
-                        <article
-                          className="structureCard"
-                          key={`structure-${index}-${node.topic}`}
-                        >
-                          <h4>{stripStar(node.topic)}</h4>
-                          <ul className="bulletList">
-                            {node.children.map((child, childIndex) => (
-                              <li
-                                className={isStarred(child) ? "starredItem" : undefined}
-                                key={`child-${index}-${childIndex}-${child}`}
-                              >
-                                {renderMarkedText(child)}
-                              </li>
-                            ))}
-                          </ul>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
+              {!usesExpandedLectureFormat && data.note.examPoints.length > 0 && (
+                <section className="outputSection">
+                  <h3>📌 시험 포인트</h3>
+                  <ul className="bulletList">
+                    {data.note.examPoints.map((item, index) => (
+                      <li
+                        className={isStarred(item) ? "starredItem" : undefined}
+                        key={`exam-${index}-${item}`}
+                      >
+                        {renderMarkedText(item)}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
 
-                  <section className="outputSection">
-                    <h3>시험 포인트</h3>
-                    <ul className="bulletList">
-                      {data.note.examPoints.map((item, index) => (
-                        <li
-                          className={isStarred(item) ? "starredItem" : undefined}
-                          key={`exam-${index}-${item}`}
-                        >
-                          {renderMarkedText(item)}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-
-                  <section className="outputSection">
-                    <h3>암기 문장</h3>
-                    <ul className="bulletList">
-                      {data.note.memoryLines.map((item, index) => (
-                        <li
-                          className={isStarred(item) ? "starredItem" : undefined}
-                          key={`memory-${index}-${item}`}
-                        >
-                          {renderMarkedText(item)}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                </>
+              {!usesExpandedLectureFormat && data.note.memoryLines.length > 0 && (
+                <section className="outputSection">
+                  <h3>💡 암기 문장</h3>
+                  <ul className="bulletList">
+                    {data.note.memoryLines.map((item, index) => (
+                      <li
+                        className={isStarred(item) ? "starredItem" : undefined}
+                        key={`memory-${index}-${item}`}
+                      >
+                        {renderMarkedText(item)}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               )}
 
               {usesExpandedLectureFormat && data.note.examAnswerTemplates.length > 0 && (
