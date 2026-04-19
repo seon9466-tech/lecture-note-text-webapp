@@ -215,11 +215,14 @@ function buildCopyText(note: LectureNote) {
     });
   }
 
-  // 작품 정리
-  if (note.works.length > 0) {
+  // 작품 정리 (중복 제거)
+  const uniqueWorks = Array.from(
+    new Map(note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
+  );
+  if (uniqueWorks.length > 0) {
     lines.push("## 🎨 작품 정리");
     lines.push("");
-    note.works.forEach((work) => {
+    uniqueWorks.forEach((work) => {
       lines.push(`**${stripStar(work.title)}** / ${renderArtist(work.artist)}`);
       work.commentary.forEach((line) => lines.push(`- ${stripStar(line)}`));
       lines.push("");
@@ -599,29 +602,6 @@ export default function HomePage() {
                 </section>
               )}
 
-              {data.note.works.length > 0 && (
-                <section className="outputSection">
-                  <h3>작품 정리</h3>
-                  <div className="workList">
-                    {data.note.works.map((work, index) => (
-                      <article className="workCard" key={`work-${index}-${work.title}`}>
-                        <h4>{stripStar(work.title)}<span className="workMeta"> / {renderArtist(work.artist)}</span></h4>
-                        <ul className="bulletList">
-                          {work.commentary.map((line, lineIndex) => (
-                            <li
-                              className={isStarred(line) ? "starredItem" : undefined}
-                              key={`work-line-${index}-${lineIndex}-${line}`}
-                            >
-                              {renderMarkedText(line)}
-                            </li>
-                          ))}
-                        </ul>
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )}
-
               <section className="outputSection">
                 <h3>📝 핵심개념 정리</h3>
                 <div className="conceptList">
@@ -682,6 +662,31 @@ export default function HomePage() {
                   ))}
                 </div>
               </section>
+
+              {data.note.works.length > 0 && (
+                <section className="outputSection">
+                  <h3>🎨 작품 정리</h3>
+                  <div className="workList">
+                    {Array.from(
+                      new Map(data.note.works.map((w) => [stripStar(w.title).trim().toLowerCase(), w])).values()
+                    ).map((work, index) => (
+                      <article className="workCard" key={`work-${index}-${work.title}`}>
+                        <h4>{stripStar(work.title)}<span className="workMeta"> / {renderArtist(work.artist)}</span></h4>
+                        <ul className="bulletList">
+                          {work.commentary.map((line, lineIndex) => (
+                            <li
+                              className={isStarred(line) ? "starredItem" : undefined}
+                              key={`work-line-${index}-${lineIndex}-${line}`}
+                            >
+                              {renderMarkedText(line)}
+                            </li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              )}
 
               {usesExpandedLectureFormat && (data.note.practiceFlow.length > 0 || data.note.practicePoints.length > 0) && (
                 <section className="outputSection">
